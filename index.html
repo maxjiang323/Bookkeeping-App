@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡易記帳本</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微軟正黑體", Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .income {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .expense {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .summary-item {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            min-width: 150px;
+        }
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .storage-notice {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .input-area {
+                flex: 1;
+                min-width: 300px;
+            }
+            .summary-area {
+                flex: 1;
+                min-width: 300px;
+            }
+            .history-area {
+                flex: 100%;
+            }
+        }
+        .filter-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-area select, .filter-area input {
+            flex: 1;
+            min-width: 120px;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 20px;
+            color: #757575;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>簡易記帳本</h1>
+    </header>
+    
+    <div class="container">
+        <div class="card input-area">
+            <h2>新增記錄</h2>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label for="date">日期</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="type">類型</label>
+                    <select id="type" required>
+                        <option value="expense">支出</option>
+                        <option value="income">收入</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category">類別</label>
+                    <select id="category" required>
+                        <option value="">-- 請選擇 --</option>
+                        <option value="食物">食物</option>
+                        <option value="交通">交通</option>
+                        <option value="娛樂">娛樂</option>
+                        <option value="購物">購物</option>
+                        <option value="住宿">住宿</option>
+                        <option value="醫療">醫療</option>
+                        <option value="薪資">薪資</option>
+                        <option value="獎金">獎金</option>
+                        <option value="投資">投資</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">金額</label>
+                    <input type="number" id="amount" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">描述</label>
+                    <input type="text" id="description" placeholder="選填">
+                </div>
+                <button type="submit">新增記錄</button>
+            </form>
+            <div id="storage-notice" class="storage-notice">
+                注意：由於瀏覽器限制，資料僅儲存於本頁面，重新整理後資料將會遺失。
+            </div>
+        </div>
+        
+        <div class="card summary-area">
+            <h2>統計摘要</h2>
+            <div class="summary">
+                <div class="summary-item">
+                    <div>總收入</div>
+                    <div class="summary-value income" id="total-income">NT$ 0</div>
+                </div>
+                <div class="summary-item">
+                    <div>總支出</div>
+                    <div class="summary-value expense" id="total-expense">NT$ 0</div>
+                </div>
+                <div class="summary-item">
+                    <div>結餘</div>
+                    <div class="summary-value" id="total-balance">NT$ 0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card history-area">
+            <h2>記錄歷史</h2>
+            <div class="filter-area">
+                <select id="filter-type">
+                    <option value="all">全部類型</option>
+                    <option value="income">只顯示收入</option>
+                    <option value="expense">只顯示支出</option>
+                </select>
+                <select id="filter-category">
+                    <option value="all">全部類別</option>
+                    <option value="食物">食物</option>
+                    <option value="交通">交通</option>
+                    <option value="娛樂">娛樂</option>
+                    <option value="購物">購物</option>
+                    <option value="住宿">住宿</option>
+                    <option value="醫療">醫療</option>
+                    <option value="薪資">薪資</option>
+                    <option value="獎金">獎金</option>
+                    <option value="投資">投資</option>
+                    <option value="其他">其他</option>
+                </select>
+                <input type="month" id="filter-month" placeholder="篩選月份">
+                <button id="clear-filter">清除篩選</button>
+            </div>
+            <div id="history-container">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>類型</th>
+                            <th>類別</th>
+                            <th>金額</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <!-- 這裡將顯示記錄 -->
+                    </tbody>
+                </table>
+                <div id="empty-message" class="empty-message">目前沒有記錄，開始新增您的第一筆吧！</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 檢查 localStorage 是否可用
+        let localStorageAvailable = false;
+        let storageNotice = document.getElementById('storage-notice');
+        
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            localStorageAvailable = true;
+        } catch (e) {
+            storageNotice.style.display = 'block';
+            console.log('localStorage 不可用，將使用記憶體儲存');
+        }
+        
+        // 初始化記錄陣列
+        let records = [];
+        
+        // 如果 localStorage 可用，則從中讀取資料
+        if (localStorageAvailable) {
+            try {
+                const storedRecords = localStorage.getItem('expense-records');
+                if (storedRecords) {
+                    records = JSON.parse(storedRecords);
+                }
+            } catch (e) {
+                console.error('無法從 localStorage 讀取資料:', e);
+            }
+        }
+        
+        // DOM 元素
+        const form = document.getElementById('expense-form');
+        const dateInput = document.getElementById('date');
+        const typeInput = document.getElementById('type');
+        const categoryInput = document.getElementById('category');
+        const amountInput = document.getElementById('amount');
+        const descriptionInput = document.getElementById('description');
+        const historyBody = document.getElementById('history-body');
+        const emptyMessage = document.getElementById('empty-message');
+        const totalIncomeEl = document.getElementById('total-income');
+        const totalExpenseEl = document.getElementById('total-expense');
+        const totalBalanceEl = document.getElementById('total-balance');
+        const filterType = document.getElementById('filter-type');
+        const filterCategory = document.getElementById('filter-category');
+        const filterMonth = document.getElementById('filter-month');
+        const clearFilterBtn = document.getElementById('clear-filter');
+        
+        // 設定今天日期為預設值
+        dateInput.valueAsDate = new Date();
+        
+        // 新增記錄
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newRecord = {
+                id: Date.now(), // 作為唯一識別
+                date: dateInput.value,
+                type: typeInput.value,
+                category: categoryInput.value,
+                amount: parseFloat(amountInput.value),
+                description: descriptionInput.value || '無'
+            };
+            
+            records.push(newRecord);
+            saveRecords();
+            renderRecords();
+            updateSummary();
+            
+            // 重設表單
+            form.reset();
+            dateInput.valueAsDate = new Date();
+        });
+        
+        // 儲存記錄
+        function saveRecords() {
+            if (localStorageAvailable) {
+                try {
+                    localStorage.setItem('expense-records', JSON.stringify(records));
+                } catch (e) {
+                    console.error('無法儲存到 localStorage:', e);
+                }
+            }
+        }
+        
+        // 渲染記錄
+        function renderRecords() {
+            // 取得篩選條件
+            const typeFilter = filterType.value;
+            const categoryFilter = filterCategory.value;
+            const monthFilter = filterMonth.value;
+            
+            // 篩選記錄
+            let filteredRecords = [...records];
+            
+            if (typeFilter !== 'all') {
+                filteredRecords = filteredRecords.filter(record => record.type === typeFilter);
+            }
+            
+            if (categoryFilter !== 'all') {
+                filteredRecords = filteredRecords.filter(record => record.category === categoryFilter);
+            }
+            
+            if (monthFilter) {
+                filteredRecords = filteredRecords.filter(record => record.date.startsWith(monthFilter));
+            }
+            
+            // 檢查是否有記錄
+            if (filteredRecords.length === 0) {
+                historyBody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            
+            emptyMessage.style.display = 'none';
+            
+            // 依日期排序 (最新的在前)
+            filteredRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // 渲染表格
+            historyBody.innerHTML = filteredRecords.map(record => `
+                <tr>
+                    <td>${formatDate(record.date)}</td>
+                    <td>${record.type === 'income' ? '收入' : '支出'}</td>
+                    <td>${record.category}</td>
+                    <td class="${record.type === 'income' ? 'income' : 'expense'}">
+                        ${record.type === 'income' ? '+' : '-'} NT$ ${record.amount.toLocaleString()}
+                    </td>
+                    <td>${record.description}</td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteRecord(${record.id})">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // 更新摘要
+        function updateSummary() {
+            const totalIncome = records
+                .filter(record => record.type === 'income')
+                .reduce((sum, record) => sum + record.amount, 0);
+                
+            const totalExpense = records
+                .filter(record => record.type === 'expense')
+                .reduce((sum, record) => sum + record.amount, 0);
+                
+            const balance = totalIncome - totalExpense;
+            
+            totalIncomeEl.textContent = `NT$ ${totalIncome.toLocaleString()}`;
+            totalExpenseEl.textContent = `NT$ ${totalExpense.toLocaleString()}`;
+            totalBalanceEl.textContent = `NT$ ${balance.toLocaleString()}`;
+            
+            // 結餘顏色
+            if (balance > 0) {
+                totalBalanceEl.className = 'summary-value income';
+            } else if (balance < 0) {
+                totalBalanceEl.className = 'summary-value expense';
+            } else {
+                totalBalanceEl.className = 'summary-value';
+            }
+        }
+        
+        // 刪除記錄
+        window.deleteRecord = function(id) {
+            if (confirm('確定要刪除這筆記錄嗎？此操作無法恢復。')) {
+                records = records.filter(record => record.id !== id);
+                saveRecords();
+                renderRecords();
+                updateSummary();
+            }
+        };
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+        }
+        
+        // 篩選事件
+        filterType.addEventListener('change', renderRecords);
+        filterCategory.addEventListener('change', renderRecords);
+        filterMonth.addEventListener('change', renderRecords);
+        
+        // 清除篩選
+        clearFilterBtn.addEventListener('click', function() {
+            filterType.value = 'all';
+            filterCategory.value = 'all';
+            filterMonth.value = '';
+            renderRecords();
+        });
+        
+        // 初始化頁面
+        renderRecords();
+        updateSummary();
+    </script>
+</body>
+</html>
